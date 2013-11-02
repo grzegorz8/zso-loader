@@ -1,0 +1,27 @@
+./testaddsub
+OK [3p]
+./testhello
+Hello, world! [3p]
+./testvar
+OK [4p]
+
+Sprawdzenie kodu:
+
+1. Złe sprawdzenie wyniku z open - powinno być porównanie z -1, 0 jest
+   poprawnym deskryptorem pliku. [-0.2p]
+2. Złe sprawdzanie wyniku z mmap - powinno być porównanie z MAP_FAILED,
+   porównanie < 0 na wskaźniku zawsze da fałsz [-0.2p]
+3. Brak sprawdzenia, czy zgadza się format danych (ELFDATA2LSB) oraz
+   architektura (EM_386) [-0.4p]
+4. Przy przetwarzaniu symboli:
+   - porównywanie całego st_info z STB_GLOBAL jest niepoprawne, należy użyc
+     odpowiednich makr do wyizolowania bindingu; do tego nie ma żadnego
+     powodu, aby ten test w ogóle istniał [-0.2p]
+   - w przypadku nieznalezienia st_shndx na liście (z powodu symbolu
+     w sekcji bez SHF_ALLOC lub w specjalnej pseudosekcji), sym->addr będzie
+     niezainicjalizowane i nie będzie zgłoszony błąd [-0.2p]
+5. Przy przetwarzaniu relokacji:
+   - pominięcie relokacji dotyczących symboli o niaznanych typach, zamiast
+     zgłaszania błędu [-0.2p]
+
+Suma: 8.6/10 

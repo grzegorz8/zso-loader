@@ -1,0 +1,70 @@
+Rozwiązania zadania I z Zaawansowanych Systemów Operacyjnych
+
+Grzegorz Kołakowski, gk291583
+
+I Struktura plików rozwiązania
+    * loader.h - niezmodyfikowany plik nagłówkowy,
+    * loader.c - jedyny plik źródłowy z kodem rozwiązania, w nim
+        zaimplementowane są wszystkie funkcje biblioteczne i pomocnicze,
+    * Makefile - kompiluje rozwiązanie i tworzy bibliotekę współdzieloną
+        libloader.so,
+    * readme.
+
+II Krótki opis rozwiązania
+
+    Funkcja module_load wykonuje kroki dokładnie według schematu podanego w 
+    treści zadania. Błąd na którymkolwiek etapie ładowania pliku powoduje
+    odwrócenie wykonanych dotychczas akcji (np. mapowanie/alokowanie pamięci)
+    i zwrócenie NULLa.
+    Wczytuje nagłówek pliku i sprawdza jego poprawność.
+    Umieszcza w pamięci wszystkie sekcje z flagą SHF_ALLOC.
+    Wczytuje i przetwarza tablicę symboli i towarzyszącą jej tablicę
+    napisów.
+    Wykonywane są relokacje.
+    Ustawiane są odpowiednie prawa dostępu do obszarów pamięci dla sekcji.
+
+    Funkcja module_unload zwalnia wszystkie zasoby używane przez moduł.
+
+    Funkcja module_getsym zwraca adres symbolu globalnego o podanej nazwie
+    (jeśli jest zdefiniowany). W przeciwnym razie zwraca NULL.
+
+
+    W rozwiązaniu używam kilku pomocniczych struktur:
+    * section - struktura opisująca sekcje elfowe, które są umieszczane w
+        pamięci (te z flagą SHF_ALLOC). Zawiera indeks w tablicy nagłówków
+        sekcji, wskaźnik do początku zamapowanej pamięci oraz wskaźnik do
+        początku obszaru pamięci, w którym znajdują się właściwe dane
+        sekcji (Konieczne jest posiadanie dwóch wskaźników, gdyż offset
+        użyty w czasie mapowania pamięci musi być wyrównany do rozmiaru
+        strony). Ponadto struktura zawiera wskaźnik do następnej sekcji
+        w liście.
+    * symbol - struktura opisująca symbol elfowy. Zawiera indeks w tablicy
+        symboli, wskaźnik do struktury elfowej odpowiadającej symbolowi,
+        adres symbolu w pamięci, nazwę symbolu oraz wskaźnik do następnego
+        symbolu na liście.
+    * Elf32_Shdr_Wrap - dodatkowa struktura opakowująca tablicę struktur
+        Elf32_Shdr. Zawiera wskaźnik do początku tablicy nagłówków sekcji,
+        wskaźnik do początku zamapowanego obszaru pamięci, rozmiar tablicy
+        i przesunięcie względem początku pliku.
+    * Elf32_Sym_Wrap - struktura opakowująca tablicę struktur Elf32_Sym.
+        Zawiera wskaźnik do początku tablicy symboli, indeks sekcji SYMTAB,
+        oraz wskaźnik do początku zamapowanego obszaru pamięci. Rozmiar i
+        przesunięcie sekcji SYMTAB jest odczytywane bezpośrednio z pól
+        z pod odpowiedniego indeksu w tablicy nagłówków sekcji.
+    * Elf32_Rel_Wrap - działa tak samo jak Elf32_Sym_Wrap, z tą różnicą, że
+        opakowuje tablicę relokacji.
+
+    Strukutra module zawiera:
+    * deskryptor otwartego pliku elfowego.
+    * Wskaźnik do nagłówka pliku elfowego.
+    * Wskaźnik do struktury opakowującej tablicę nagłówków sekcji.
+    * Listę sekcji umieszczonych w pamięci.
+    * Wskaźnik do sekcji napisów stowarzyszonej z tablicą symboli.
+    * Wskaźnik do struktury opakowującej tablicę symboli.
+    * Listę symboli w pliku elfowym.
+    * Wskaźnik do struktury opakowującej aktualnie przetwarzaną tablicę
+      relokacji (pamięć jest zwalniana natychmiast po przetworzeniu
+      tablicy).
+
+    Ponadto definiuję zestaw funkcji pomocniczych zwalniających zaalokowaną
+    lub zamapowaną pamięć (unikamy powtarzania kodu w load i unload).
